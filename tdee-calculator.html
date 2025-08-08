@@ -1,0 +1,110 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TDEE Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #tdee-calculator { max-width: 600px; margin: auto; border: 1px solid #ccc; border-radius: 10px; padding: 20px; }
+    h2 { text-align: center; }
+    select, input { width: 100%; padding: 10px; margin-bottom: 15px; }
+    button { width: 100%; padding: 12px; background-color: #ff4500; color: white; border: none; border-radius: 5px; font-size: 16px; }
+    #tdee-result, #macros-result { text-align: center; margin-top: 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <div id="tdee-calculator">
+    <h2>TDEE & Macronutrient Calculator</h2>
+
+    <label for="unit">Units:</label>
+    <select id="unit" onchange="toggleUnits()">
+      <option value="imperial">Imperial (lbs, inches)</option>
+      <option value="metric">Metric (kg, cm)</option>
+    </select>
+
+    <label>Gender:</label>
+    <select id="gender">
+      <option value="male">Male</option>
+      <option value="female">Female</option>
+    </select>
+
+    <label>Age (years):</label>
+    <input type="number" id="age" placeholder="Age">
+
+    <label id="weight-label">Weight (lbs):</label>
+    <input type="number" id="weight" placeholder="Weight">
+
+    <label id="height-label">Height (inches):</label>
+    <input type="number" id="height" placeholder="Height">
+
+    <label>Activity Level:</label>
+    <select id="activity">
+      <option value="1.2">No exercise - Very sedentary.</option>
+      <option value="1.375">Light exercise - 1-3 times/week.</option>
+      <option value="1.55">Moderate exercise - 3-5 times/week.</option>
+      <option value="1.725">Heavy exercise - 6-7 times/week.</option>
+      <option value="1.9">Extreme exercise - Daily intense training or physical labor.</option>
+    </select>
+
+    <button onclick="calculateTDEE()">Calculate</button>
+
+    <div id="tdee-result"></div>
+    <div id="macros-result"></div>
+  </div>
+
+  <script>
+    function toggleUnits() {
+      const unit = document.getElementById('unit').value;
+      document.getElementById('weight-label').innerText = unit === 'imperial' ? 'Weight (lbs):' : 'Weight (kg):';
+      document.getElementById('height-label').innerText = unit === 'imperial' ? 'Height (inches):' : 'Height (cm):';
+    }
+
+    function calculateTDEE() {
+      const gender = document.getElementById('gender').value;
+      const age = parseFloat(document.getElementById('age').value);
+      let weight = parseFloat(document.getElementById('weight').value);
+      let height = parseFloat(document.getElementById('height').value);
+      const activity = parseFloat(document.getElementById('activity').value);
+      const unit = document.getElementById('unit').value;
+
+      if (isNaN(age) || isNaN(weight) || isNaN(height)) {
+        document.getElementById('tdee-result').innerText = "Please enter valid values for all fields.";
+        document.getElementById('macros-result').innerText = "";
+        return;
+      }
+
+      if (unit === "imperial") {
+        weight *= 0.453592;
+        height *= 2.54;
+      }
+
+      let bmr;
+      if (gender === "male") {
+        bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+      } else {
+        bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+      }
+
+      const tdee = Math.round(bmr * activity);
+
+      const proteinCals = tdee * 0.30;
+      const carbCals = tdee * 0.40;
+      const fatCals = tdee * 0.30;
+
+      const proteinGrams = Math.round(proteinCals / 4);
+      const carbGrams = Math.round(carbCals / 4);
+      const fatGrams = Math.round(fatCals / 9);
+
+      document.getElementById('tdee-result').innerText = `Your estimated TDEE is ${tdee} calories/day.`;
+      document.getElementById('macros-result').innerHTML = `
+        Suggested Macronutrients:<br>
+        • Protein: ${proteinGrams}g<br>
+        • Carbohydrates: ${carbGrams}g<br>
+        • Fat: ${fatGrams}g
+      `;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "tiger-fitness-workout-pdfs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate:workouts": "node scripts/generate-workout-pdfs.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}

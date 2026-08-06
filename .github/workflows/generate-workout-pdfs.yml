@@ -1,0 +1,48 @@
+name: Generate Workout PDFs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'scripts/generate-workout-pdfs.mjs'
+      - '.github/workflows/generate-workout-pdfs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render-workouts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check out files
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install the PDF renderer
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Build current Workout PDFs
+        run: |
+          rm -rf workouts
+          npm run generate:workouts
+
+      - name: Publish finished PDF files
+        run: |
+          git config user.name "Tiger Fitness PDF Builder"
+          git config user.email "pdf-builder@tigerfitness.com"
+          git add workouts
+          if git diff --cached --quiet; then
+            echo "No workout PDF changes to publish."
+          else
+            git commit -m "Publish branded Workout PDFs"
+            git push
+          fi

@@ -1,5 +1,5 @@
 import { chromium } from 'playwright';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 
 const SITE = 'https://tigerfitness.com';
 const OUTPUT = 'workouts';
@@ -9,7 +9,6 @@ const workoutUrls = [...sitemap.matchAll(/<loc>(https:\/\/tigerfitness\.com\/blo
 if (!workoutUrls.length) throw new Error('No Workout URLs were found in the live sitemap.');
 
 const escapeHtml = (value = '') => String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-const clean = (value = '') => String(value).replace(/\s+/g, ' ').trim();
 
 function documentHtml(data) {
   const meta = data.summary.slice(0, 8).map(([label, value]) => `<div><label>${escapeHtml(label)}</label><strong>${escapeHtml(value)}</strong></div>`).join('');
@@ -30,7 +29,8 @@ const failures = [];
 for (const url of workoutUrls) {
   const page = await browser.newPage({ viewport: { width: 816, height: 1056 }, deviceScaleFactor: 1 });
   try {
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 90000 });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForSelector('.tf-workout', { timeout: 15000 });
     const data = await page.evaluate(() => {
       const cleanText = (value = '') => value.replace(/\s+/g, ' ').trim();
       const root = document.querySelector('.tf-workout');
@@ -58,7 +58,7 @@ for (const url of workoutUrls) {
       };
     });
     if (!data?.days?.length) throw new Error('No workout day tables found.');
-    await page.setContent(documentHtml(data), { waitUntil: 'networkidle' });
+    await page.setContent(documentHtml(data), { waitUntil: 'load', timeout: 30000 });
     await page.pdf({ path: `${OUTPUT}/${data.handle}.pdf`, format: 'Letter', printBackground: true, preferCSSPageSize: true, margin: { top: 0, right: 0, bottom: 0, left: 0 } });
     console.log(`Generated ${data.handle}`);
   } catch (error) {
